@@ -9,6 +9,7 @@ line_beginning_re = re.compile(r'^', re.MULTILINE)
 whitespace_re = re.compile(r'[\t ]+')
 all_whitespace_re = re.compile(r'[\s]+')
 html_heading_re = re.compile(r'h[1-6]')
+non_alphanumeric_re = re.compile(r'\W+')
 
 
 # Heading styles
@@ -143,7 +144,10 @@ class MarkdownConverter(object):
                 text += self.process_tag(el, convert_children_as_inline)
 
         if not children_only:
-            convert_fn = getattr(self, 'convert_%s' % node.name, None)
+            # tags like `ac:structured-macro` will be converted to `ac_structured_macro`
+            # to allow for valid python function names like `convert_ac_structured_macro()`
+            node_name = non_alphanumeric_re.sub('_', node.name)
+            convert_fn = getattr(self, 'convert_%s' % node_name, None)
             if convert_fn and self.should_convert_tag(node.name):
                 text = convert_fn(node, text, convert_as_inline)
 
